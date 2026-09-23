@@ -6,7 +6,7 @@ ENV PORT=4000
 
 # Install dependencies first (better layer caching)
 COPY package.json package-lock.json* ./
-RUN npm install --omit=dev
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # Copy application source
 COPY src ./src

@@ -8,7 +8,7 @@ ENV VITE_API_URL=${VITE_API_URL}
 
 # Install dependencies first (better layer caching)
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
 # Copy the rest of the source and build
 COPY . .
