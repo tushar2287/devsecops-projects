@@ -1,16 +1,63 @@
-name: test-pipeline
+name: Build full-stack-app
 
 on:
   push:
     branches: [devops]
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
 jobs:
   build:
     runs-on: self-hosted
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0          # scan the complete Git history
+          fetch-depth: 0
+
+      - name: Build backend image
+        run: docker build --pull -t full-stack-backend:ci ./full-stack-app/backend
+
+      - name: Build frontend image
+        run: docker build --pull --build-arg "VITE_API_URL=${{ vars.VITE_API_URL }}" -t full-stack-frontend:ci ./full-stack-app/frontend
+
+      - name: Start application
+        run: |
+          docker run -d --name full-stack-backend-ci -p 4000:4000 full-stack-backend:ci
+          docker run -d --name full-stack-frontend-ci -p 3000:80 full-stack-frontend:ci
+
+      - name: Test backend health endpoint
+        shell: pwsh
+        run: |
+          $deadline = (Get-Date).AddMinutes(2)
+          do {
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:4000/health" -UseBasicParsing -ErrorAction Stop
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Backend health check passed."
+                exit 0
+              }
+            } catch {
+              Start-Sleep -Seconds 5
+            }
+          } while ((Get-Date) -lt $deadline)
+
+          docker logs full-stack-backend-ci
+          docker logs full-stack-frontend-ci
+          throw "Backend health check failed."
+
+      - name: Test frontend endpoint
+        shell: pwsh
+        run: |
+          $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing
+          if ($response.StatusCode -ne 200) {
+            throw "Frontend check failed with status $($response.StatusCode)."
+          }
+
+      - name: Stop application
+        if: always()
+        run: |
+          docker rm -f full-stack-frontend-ci full-stack-backend-ci
+          docker image rm full-stack-frontend:ci full-stack-backend:ci

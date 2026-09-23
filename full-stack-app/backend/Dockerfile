@@ -2,6 +2,8 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+ENV PORT=4000
+
 # Install dependencies first (better layer caching)
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev

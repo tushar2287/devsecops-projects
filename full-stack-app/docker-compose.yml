@@ -5,11 +5,15 @@ services:
     container_name: backend-health-api
     ports:
       - "4000:4000"
+    environment:
+      PORT: ${BACKEND_PORT:-4000}
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
     container_name: react-docker-app
     ports:
       - "3000:80"
