@@ -1,0 +1,16 @@
+name: test-pipeline
+
+on:
+  push:
+    branches: [devops]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # scan the complete Git history
