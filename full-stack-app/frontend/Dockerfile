@@ -1,5 +1,5 @@
 # ---- Stage 1: Build the React app ----
-FROM node:22-alpine AS build
+FROM node:22-bookworm-slim AS build
 
 WORKDIR /app
 
@@ -7,8 +7,8 @@ ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 
 # Install dependencies first (better layer caching)
-COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 # Copy the rest of the source and build
 COPY . .

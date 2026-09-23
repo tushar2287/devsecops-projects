@@ -1,12 +1,12 @@
-FROM node:22-alpine
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 
 ENV PORT=4000
 
 # Install dependencies first (better layer caching)
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev --no-audit --no-fund
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 # Copy application source
 COPY src ./src
